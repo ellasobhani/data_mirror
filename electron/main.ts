@@ -36,9 +36,9 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  // Initialize DB and seed fake records for Phase 0
+  // Initialize DB; seed fake records in dev only
   getDb()
-  seedFakeRecords()
+  if (process.env['NODE_ENV'] === 'development') seedFakeRecords()
 
   createWindow()
 

@@ -139,6 +139,58 @@ interface LensCardProps {
   cached: { result: string; createdAt: number } | null
 }
 
+function StarRating({ lensId }: { lensId: 'marketer' | 'network' | 'relationships' }) {
+  const [rating, setRating] = useState<number | null>(null)
+  const [hover, setHover] = useState<number | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  async function handleRate(quality: number) {
+    setRating(quality)
+    setSaved(false)
+    try {
+      await trpc.rateLens.mutate({ lensId, quality })
+      setSaved(true)
+    } catch {
+      setRating(null)
+    }
+  }
+
+  const active = hover ?? rating
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <span style={{ fontFamily: MONO, fontSize: '10px', color: '#555', letterSpacing: '0.06em' }}>
+        RATE
+      </span>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          onClick={() => handleRate(n)}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(null)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0 1px',
+            fontSize: '14px',
+            color: active != null && n <= active ? AMBER : '#444',
+            transition: 'color 0.1s',
+            lineHeight: 1,
+          }}
+        >
+          ★
+        </button>
+      ))}
+      {saved && (
+        <span style={{ fontFamily: MONO, fontSize: '10px', color: '#555', letterSpacing: '0.06em' }}>
+          SAVED
+        </span>
+      )}
+    </div>
+  )
+}
+
 function LensCard({ lens, onGenerate, generating, cached }: LensCardProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -272,10 +324,13 @@ function LensCard({ lens, onGenerate, generating, cached }: LensCardProps) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px',
           }}>
             <span style={{ fontFamily: MONO, fontSize: '10px', color: '#555', letterSpacing: '0.06em' }}>
               GENERATED {new Date(cached.createdAt).toLocaleString().toUpperCase()}
             </span>
+            <StarRating lensId={lens.id} />
             <span style={{ fontFamily: MONO, fontSize: '10px', color: '#555', letterSpacing: '0.06em' }}>
               NO MESSAGE CONTENT TRANSMITTED ◈
             </span>

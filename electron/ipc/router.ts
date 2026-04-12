@@ -2,13 +2,18 @@ import { initTRPC } from '@trpc/server'
 import { z } from 'zod'
 import { dialog } from 'electron'
 import { getRecords, getAllPlatformStatuses, getDb } from '../db/index'
-import { ingestLinkedin } from '../ingest/linkedin'
+import { saveLensResult } from '../db/queries'
 import { streamIngestFile } from '../ingest/stream-download'
 import { saveApiKey, loadApiKey } from '../ai/gemini'
 import { runLens, LensId } from '../ai/lenses'
+import { rateLens } from '../db/queries'
 
 // Import parsers so their registerParser() calls execute at startup
 import '../ingest/parsers/google/search-history'
+import '../ingest/parsers/google/youtube'
+import '../ingest/parsers/google/chrome'
+import '../ingest/parsers/google/location'
+import '../ingest/parsers/linkedin/index'
 
 const t = initTRPC.create({ isServer: true })
 
@@ -65,9 +70,11 @@ export const router = t.router({
 
   ingestLinkedin: t.procedure
     .input(z.object({ path: z.string() }))
-    .mutation(({ input }) => {
-      const count = ingestLinkedin(input.path)
-      return { count }
+    .mutation(async ({ input }) => {
+      // Wipe existing LinkedIn records before re-import
+      getDb().prepare('DELETE FROM records WHERE platform = ?').run('linkedin')
+      const { recordsWritten } = await streamIngestFile(input.path)
+      return { count: recordsWritten }
     }),
 
   // ── AI / Gemini ───────────────────────────────────────────────
@@ -97,13 +104,15 @@ export const router = t.router({
     .input(z.object({ lensId: lensIdSchema }))
     .mutation(async ({ input }) => {
       const result = await runLens(input.lensId as LensId)
-      const db = getDb()
-      db.prepare(`
-        INSERT INTO lens_results (lens_id, result, created_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT(lens_id) DO UPDATE SET result = excluded.result, created_at = excluded.created_at
-      `).run(input.lensId, result, Date.now())
+      saveLensResult(input.lensId, result)
       return { result }
+    }),
+
+  rateLens: t.procedure
+    .input(z.object({ lensId: lensIdSchema, quality: z.number().int().min(1).max(5) }))
+    .mutation(({ input }) => {
+      rateLens(input.lensId, input.quality)
+      return { ok: true }
     }),
 })
 
