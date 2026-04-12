@@ -79,8 +79,15 @@ export default function App() {
       const paths = await trpc.showMultiOpenDialog.query()
       if (!paths.length) { setImportStatus(''); return }
       setImportStatus(`Importing ${paths.length} ZIP(s)...`)
-      const { filesProcessed, recordsWritten } = await trpc.ingestGoogle.mutate({ paths })
-      setImportStatus(`Google: ${recordsWritten} records from ${filesProcessed} files`)
+      const { filesProcessed, recordsWritten, sampleUnmatched } = await trpc.ingestGoogle.mutate({ paths })
+      if (recordsWritten > 0) {
+        setImportStatus(`Google: ${recordsWritten} records from ${filesProcessed} files`)
+      } else {
+        setImportStatus(
+          `Google: 0 records from ${filesProcessed} files — no matching paths found.\n` +
+          `Sample paths in your ZIP:\n${sampleUnmatched.slice(0, 10).join('\n')}`
+        )
+      }
       await refreshRecords()
     } catch (err) {
       setImportStatus(`Import failed: ${String(err)}`)
@@ -131,7 +138,7 @@ export default function App() {
               Import Google Takeout
             </button>
             {importStatus && (
-              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{importStatus}</span>
+              <pre style={{ fontSize: '11px', color: 'var(--muted)', margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'inherit', maxWidth: '500px' }}>{importStatus}</pre>
             )}
           </div>
 

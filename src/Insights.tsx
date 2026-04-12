@@ -388,7 +388,18 @@ export default function Insights() {
       const { result } = await trpc.generateLens.mutate({ lensId })
       setCached(prev => ({ ...prev, [lensId]: { result, createdAt: Date.now() } }))
     } catch (err) {
-      setError(`Failed: ${String(err)}`)
+      const msg = String(err)
+      if (msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
+        const retryMatch = msg.match(/retry in ([\d.]+)s/i)
+        const retryMsg = retryMatch ? ` Retry in ${Math.ceil(Number(retryMatch[1]))}s.` : ''
+        setError(
+          `Gemini free-tier quota exhausted.${retryMsg} ` +
+          `To fix: enable billing at console.cloud.google.com (pay-as-you-go, ~$0.10/1M tokens). ` +
+          `Or wait until midnight Pacific time for the daily limit to reset.`
+        )
+      } else {
+        setError(`Failed: ${msg}`)
+      }
     } finally {
       setGenerating(null)
     }

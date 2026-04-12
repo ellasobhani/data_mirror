@@ -16,10 +16,11 @@ import type { DataRecord } from '../../shared/schema'
 export async function streamIngestFile(
   filePath: string,
   onProgress?: ProgressCallback
-): Promise<{ filesProcessed: number; recordsWritten: number }> {
+): Promise<{ filesProcessed: number; recordsWritten: number; sampleUnmatched: string[] }> {
   return new Promise((resolve, reject) => {
     let filesProcessed = 0
     let recordsWritten = 0
+    const sampleUnmatched: string[] = []
 
     const db = getDb()
     const insert = db.prepare(`
@@ -71,6 +72,9 @@ export async function streamIngestFile(
             if (records && records.length > 0) {
               insertBatch(records)
               recordsWritten += records.length
+            } else if (records === null && sampleUnmatched.length < 20) {
+              // No parser matched this path — collect for diagnostics
+              sampleUnmatched.push(file.name)
             }
           } catch (e) {
             console.error(`[ingest] parser error for ${file.name}:`, e)
@@ -93,7 +97,7 @@ export async function streamIngestFile(
     fileStream.on('end', () => {
       // Signal EOF to fflate
       unzipper.push(new Uint8Array(0), true)
-      resolve({ filesProcessed, recordsWritten })
+      resolve({ filesProcessed, recordsWritten, sampleUnmatched })
     })
 
     fileStream.on('error', reject)

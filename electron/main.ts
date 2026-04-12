@@ -2,7 +2,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import path from 'path'
 import { createIPCHandler } from 'electron-trpc/main'
 import { router } from './ipc/router'
-import { getDb, seedFakeRecords } from './db/index'
+import { getDb } from './db/index'
 
 // Keep a global reference to prevent garbage collection
 let mainWindow: BrowserWindow | null = null
@@ -36,9 +36,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  // Initialize DB; seed fake records in dev only
   getDb()
-  if (process.env['NODE_ENV'] === 'development') seedFakeRecords()
 
   createWindow()
 

@@ -60,12 +60,16 @@ export const router = t.router({
     .mutation(async ({ input }) => {
       let totalFiles = 0
       let totalRecords = 0
+      const allUnmatched: string[] = []
       for (const path of input.paths) {
-        const { filesProcessed, recordsWritten } = await streamIngestFile(path)
+        const { filesProcessed, recordsWritten, sampleUnmatched } = await streamIngestFile(path)
         totalFiles += filesProcessed
         totalRecords += recordsWritten
+        for (const f of sampleUnmatched) {
+          if (allUnmatched.length < 20) allUnmatched.push(f)
+        }
       }
-      return { filesProcessed: totalFiles, recordsWritten: totalRecords }
+      return { filesProcessed: totalFiles, recordsWritten: totalRecords, sampleUnmatched: allUnmatched }
     }),
 
   ingestLinkedin: t.procedure
