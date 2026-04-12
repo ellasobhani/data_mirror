@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+@keyframes scan-line {
+  0%   { top: -4px; opacity: 0.6; }
+  80%  { opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+@keyframes result-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #e8e8e8;
+  --muted: #888;
+  --accent: #4f8ef7;
+  --green: #4caf50;
+  --red: #f44336;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body { background: var(--bg); }
+
+.platform-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.platform-google  { background: #1a3a5c; color: #4f8ef7; }
+.platform-meta    { background: #1a2a4a; color: #1877f2; }
+.platform-spotify { background: #1a3a1a; color: #1db954; }
+.platform-amazon  { background: #3a2a1a; color: #ff9900; }
+.platform-apple   { background: #2a2a2a; color: #888; }
+.platform-x       { background: #1a1a1a; color: #e8e8e8; }
+.platform-default { background: #2a2a2a; color: #888; }
+
+.category-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--border);
+}
