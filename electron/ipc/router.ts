@@ -2,13 +2,13 @@ import { initTRPC } from '@trpc/server'
 import { z } from 'zod'
 import { dialog } from 'electron'
 import { getRecords, getAllPlatformStatuses, getDb } from '../db/index'
-import { ingestLinkedin } from '../ingest/linkedin'
 import { streamIngestFile } from '../ingest/stream-download'
 import { saveApiKey, loadApiKey } from '../ai/gemini'
 import { runLens, LensId } from '../ai/lenses'
 
 // Import parsers so their registerParser() calls execute at startup
 import '../ingest/parsers/google/search-history'
+import '../ingest/parsers/linkedin'
 
 const t = initTRPC.create({ isServer: true })
 
@@ -65,9 +65,11 @@ export const router = t.router({
 
   ingestLinkedin: t.procedure
     .input(z.object({ path: z.string() }))
-    .mutation(({ input }) => {
-      const count = ingestLinkedin(input.path)
-      return { count }
+    .mutation(async ({ input }) => {
+      // Clear existing LinkedIn records so a re-import replaces rather than appends.
+      getDb().prepare('DELETE FROM records WHERE platform = ?').run('linkedin')
+      const { recordsWritten } = await streamIngestFile(input.path)
+      return { count: recordsWritten }
     }),
 
   // ── AI / Gemini ───────────────────────────────────────────────

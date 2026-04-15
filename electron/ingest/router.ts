@@ -32,7 +32,7 @@ function matchPattern(filename: string, pattern: string): boolean {
     .replace(/\x00/g, '.*')                 // ** = cross-segment wildcard
     .replace(/\?/g, '[^/]')
 
-  return new RegExp(`(^|/)${regexStr}$`).test(f)
+  return new RegExp(`(^|/)${regexStr}$`, 'i').test(f)
 }
 
 /**
