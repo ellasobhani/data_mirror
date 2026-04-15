@@ -36,7 +36,7 @@ export async function generateWithGemini(prompt: string): Promise<string> {
   const key = loadApiKey()
   if (!key) throw new Error('No Gemini API key set. Enter your key in the Insights tab.')
   const genAI = new GoogleGenerativeAI(key)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
   const result = await model.generateContent(prompt)
   return result.response.text()
 }
